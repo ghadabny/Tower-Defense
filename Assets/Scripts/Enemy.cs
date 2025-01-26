@@ -74,7 +74,7 @@ public class Enemy : MonoBehaviour
         }
 
         // Check if the enemy has reached the endpoint
-        if (pathIndex >= path.Count && Vector3.Distance(transform.position, exitPoint.position) < 0.1f)
+        if (pathIndex >= path.Count )//&& Vector3.Distance(transform.position, exitPoint.position) < 0.1f)
         {
             HandleEscape();
         }
