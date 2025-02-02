@@ -331,7 +331,7 @@ public class Tower : MonoBehaviour
         Grid grid = FindObjectOfType<Grid>();
         if (grid != null)
         {
-            grid.UpdateNodeWalkability(transform.position, false);
+            //grid.UpdateNodeWalkability(transform.position, false);
             NotifyEnemiesToRecalculatePaths();
         }
     }

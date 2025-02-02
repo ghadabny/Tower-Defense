@@ -374,11 +374,12 @@ public class GameManager : Singleton<GameManager>
 
     public void RegisterEnemy(Enemy enemy)
     {
-        if (enemy != null)
+        if (enemy != null && !EnemyList.Contains(enemy))
         {
             EnemyList.Add(enemy);
         }
     }
+
 
     public void UnRegister(Enemy enemy)
     {
@@ -392,16 +393,25 @@ public class GameManager : Singleton<GameManager>
 
     public void DestroyAllEnemies()
     {
-        // Safely destroy all enemies in the list
         foreach (Enemy enemy in new List<Enemy>(EnemyList))
         {
             if (enemy != null)
             {
-                Destroy(enemy.gameObject);
+                // Check if the enemy is a scene instance:
+                if (!string.IsNullOrEmpty(enemy.gameObject.scene.name))
+                {
+                    Destroy(enemy.gameObject);
+                }
+                else
+                {
+                    Debug.LogWarning("Not destroying asset: " + enemy.name + " because it is not a scene instance.");
+                }
             }
         }
         EnemyList.Clear();
     }
+
+
 
     private void handleEscape()
     {

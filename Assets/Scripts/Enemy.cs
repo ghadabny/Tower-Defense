@@ -158,6 +158,7 @@ public class Enemy : MonoBehaviour
         GameManager.Instance.TotalEscaped += 1;
         GameManager.Instance.RoundEscaped += 1;
         GameManager.Instance.UnRegister(this);
+        GameManager.Instance.RegisterEnemy(this);
         Destroy(gameObject);
     }
 
@@ -201,8 +202,10 @@ public class Enemy : MonoBehaviour
         enemyCollider.enabled = false;
         GameManager.Instance.addMoney(rewardAmt);
         GameManager.Instance.AudioSource.PlayOneShot(SoundManager.Instance.Die);
+        GameManager.Instance.UnRegister(this);
         Destroy(gameObject);
         GameManager.Instance.isWaveOver();
+        
     }
 
 
