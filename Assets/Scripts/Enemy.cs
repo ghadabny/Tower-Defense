@@ -1,35 +1,32 @@
 ﻿using UnityEngine;
+using System.Collections;
 using System.Collections.Generic;
-using static UnityEngine.GraphicsBuffer;
 
 public class Enemy : MonoBehaviour
 {
     [SerializeField] private int healthPoints;
     [SerializeField] private int rewardAmt;
-    [SerializeField] private Transform exitPoint;
+    [SerializeField] private Transform exitPoint; // Optional: if using a fixed exit
     [SerializeField] private Animator anim;
     [SerializeField] private float speed = 1f;
-    private Transform enemy;
-    private Collider2D enemyCollider;
 
-    private bool isDead = false;
     private List<Node> path;
     private int pathIndex = 0;
-
-    //added
     private PathfindingManager pathfindingManager;
+    private Collider2D enemyCollider;
+    private bool isDead = false;
 
     public bool IsDead => isDead;
 
     void Start()
     {
-        enemy = GetComponent<Transform> ();
+        enemyCollider = GetComponent<Collider2D>();
         anim = GetComponent<Animator>();
         GameManager.Instance.RegisterEnemy(this);
         pathfindingManager = FindObjectOfType<PathfindingManager>();
         CalculatePath();
-        enemyCollider = GetComponent<Collider2D>();
-
+        // Subscribe to obstacle updates.
+        ObstacleEvents.OnObstaclesUpdated += RecalculatePath;
     }
 
     void Update()
@@ -40,182 +37,119 @@ public class Enemy : MonoBehaviour
         }
     }
 
-
-    /*void Update()
-    {
-        if (!isDead && path != null && pathIndex < path.Count)
-        {
-            Vector3 targetPosition = path[pathIndex].worldPosition;
-            transform.position = Vector3.MoveTowards(transform.position, targetPosition, speed * Time.deltaTime);
-
-            if (Vector3.Distance(transform.position, targetPosition) < 0.1f)
-            {
-                pathIndex++;
-            }
-        }
-    }*/
-
     private void FollowPath()
     {
         if (path == null || pathIndex >= path.Count)
         {
-            Debug.LogWarning("Path is null or completed. Enemy cannot move.");
             HandleEscape();
             return;
         }
 
-        Vector3 targetPosition = path[pathIndex].worldPosition;
-        transform.position = Vector3.MoveTowards(transform.position, targetPosition, speed * Time.deltaTime);
-
-        // Check if the enemy reached the current path node
-        if (Vector3.Distance(transform.position, targetPosition) < 0.1f)
+        Vector3 targetPos = path[pathIndex].worldPosition;
+        transform.position = Vector3.MoveTowards(transform.position, targetPos, speed * Time.deltaTime);
+        if (Vector3.Distance(transform.position, targetPos) < 0.1f)
         {
             pathIndex++;
         }
-
-        // Check if the enemy has reached the endpoint
-        if (pathIndex >= path.Count )//&& Vector3.Distance(transform.position, exitPoint.position) < 0.1f)
+        if (pathIndex >= path.Count)
         {
             HandleEscape();
         }
     }
-
-    /*private void OnTriggerEnter(Collider other)
-    {
-        if (other.CompareTag("Finish"))
-        {
-            HandleEscape();
-        }
-    }*/
-
 
     public void CalculatePath()
     {
-        PathfindingManager pathfindingManager = FindObjectOfType<PathfindingManager>();
-        if (pathfindingManager == null)
+        // For simplicity, choose the closest object tagged "Finish"
+        GameObject[] finishPoints = GameObject.FindGameObjectsWithTag("Finish");
+        if (finishPoints.Length == 0)
         {
-            Debug.LogError("PathfindingManager not found!");
+            Debug.LogError("No finish points found!");
             return;
         }
-
-        GameObject[] endPoints = GameObject.FindGameObjectsWithTag("Finish");
-        if (endPoints.Length == 0)
+        GameObject closest = finishPoints[0];
+        float minDist = Vector3.Distance(transform.position, closest.transform.position);
+        foreach (GameObject fp in finishPoints)
         {
-            Debug.LogError("No endpoints found with the tag 'Finish'!");
-            return;
-        }
-
-        GameObject closestEndPoint = null;
-        float shortestDistance = float.MaxValue;
-
-        foreach (GameObject endPoint in endPoints)
-        {
-            float distance = Vector3.Distance(transform.position, endPoint.transform.position);
-            if (distance < shortestDistance)
+            float d = Vector3.Distance(transform.position, fp.transform.position);
+            if (d < minDist)
             {
-                shortestDistance = distance;
-                closestEndPoint = endPoint;
+                minDist = d;
+                closest = fp;
             }
         }
-
-        if (closestEndPoint != null)
-        {
-            path = pathfindingManager.FindPath(transform.position, closestEndPoint.transform.position);
-            if (path == null || path.Count == 0)
-            {
-                Debug.LogError("No valid path found for the enemy!");
-            }
-            else
-            {
-                Debug.Log("Path calculated successfully.");
-            }
-        }
-
-        pathIndex = 0;
-    }
-
-
-    /*private void CalculatePath()
-    {
-        PathfindingManager pathfindingManager = FindObjectOfType<PathfindingManager>();
-        if (pathfindingManager == null)
-        {
-            Debug.LogError("PathfindingManager not found!");
-            return;
-        }
-
-        path = pathfindingManager.FindPath(transform.position, exitPoint.position);
+        path = pathfindingManager.FindPath(transform.position, closest.transform.position);
         if (path == null || path.Count == 0)
         {
-            Debug.LogWarning("No valid path found for the enemy!");
+            Debug.LogError("No valid path found for enemy!");
         }
-
         pathIndex = 0;
     }
-    */
+
+    public void RecalculatePath()
+    {
+        if (!isDead)
+        {
+            CalculatePath();
+            pathIndex = 0;
+        }
+    }
+
     private void HandleEscape()
     {
-        GameManager.Instance.TotalEscaped += 1;
-        GameManager.Instance.RoundEscaped += 1;
+        // Increment both total and round escapes.
+        GameManager.Instance.TotalEscaped++;
+        GameManager.Instance.RoundEscaped++;
         GameManager.Instance.UnRegister(this);
-        GameManager.Instance.RegisterEnemy(this);
         Destroy(gameObject);
     }
 
-    public void enemyHit(int hitPoints)
+    public void enemyHit(int damage)
     {
-        if (healthPoints - hitPoints > 0)
+        if (healthPoints > damage)
         {
+            healthPoints -= damage;
             anim.Play("Hurt");
             GameManager.Instance.AudioSource.PlayOneShot(SoundManager.Instance.Hit);
-            healthPoints -= hitPoints;
         }
         else
         {
-            die();
+            Die();
         }
     }
 
-    void OnTriggerEnter2D(Collider2D other)
-    {
-       
-        if (other.tag == "Finish")
-        {
-            GameManager.Instance.TotalEscaped += 1;
-            GameManager.Instance.RoundEscaped += 1;
-            GameManager.Instance.UnRegister(this);
-            GameManager.Instance.isWaveOver();
-        }
-        else if (other.tag == "Projectile")
-        {
-            Projectile newP = other.gameObject.GetComponent<Projectile>();
-            enemyHit(newP.AttackStrength);
-            Destroy(other.gameObject);
-        }
-    }
-
-    private void die()
+    private void Die()
     {
         isDead = true;
         anim.SetTrigger("didDie");
-        GameManager.Instance.TotalKilled += 1;
+        GameManager.Instance.TotalKilled++;
         enemyCollider.enabled = false;
         GameManager.Instance.addMoney(rewardAmt);
         GameManager.Instance.AudioSource.PlayOneShot(SoundManager.Instance.Die);
         GameManager.Instance.UnRegister(this);
         Destroy(gameObject);
         GameManager.Instance.isWaveOver();
-        
     }
 
-
-    public void RecalculatePath()
+    void OnTriggerEnter2D(Collider2D other)
     {
-        PathfindingManager pathfindingManager = FindObjectOfType<PathfindingManager>();
-        if (pathfindingManager != null)
+        if (other.CompareTag("Finish"))
         {
-            path = pathfindingManager.FindPath(transform.position, exitPoint.position);
-            pathIndex = 0;
+            GameManager.Instance.TotalEscaped++;
+            GameManager.Instance.RoundEscaped++;
+            GameManager.Instance.UnRegister(this);
+            GameManager.Instance.isWaveOver();
         }
+        else if (other.CompareTag("Projectile"))
+        {
+            Projectile proj = other.GetComponent<Projectile>();
+            if (proj != null)
+                enemyHit(proj.AttackStrength);
+            Destroy(other.gameObject);
+        }
+    }
+
+    void OnDestroy()
+    {
+        ObstacleEvents.OnObstaclesUpdated -= RecalculatePath;
     }
 }

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 public class PathfindingManager : MonoBehaviour
 {
     public Grid grid;
-    private Pathfinding pathfinding;
+    private IPathfinder pathfinder;
 
     void Awake()
     {
@@ -12,11 +12,11 @@ public class PathfindingManager : MonoBehaviour
         {
             grid = FindObjectOfType<Grid>();
         }
-        pathfinding = new Pathfinding(grid);
+        pathfinder = new Pathfinding(grid); // Our concrete strategy.
     }
 
     public List<Node> FindPath(Vector3 start, Vector3 target)
     {
-        return pathfinding.FindPath(start, target);
+        return pathfinder.FindPath(start, target);
     }
 }
