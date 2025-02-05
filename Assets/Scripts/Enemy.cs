@@ -1,87 +1,155 @@
 ﻿using UnityEngine;
+using System.Collections;
+using System.Collections.Generic;
 
-public class Enemy : MonoBehaviour {
-	
-	[SerializeField]
-	private int healthPoints;
-	[SerializeField]
-	private int rewardAmt;
-	[SerializeField]
-	private Transform exitPoint;
-	[SerializeField]
-	private Transform[] wayPoints;
-	[SerializeField]
-	private float navigationUpdate;
-	[SerializeField]
-	private Animator anim;
-	private int target = 0;
-	private Transform enemy;
-	private Collider2D enemyCollider;
-	private float navigationTime = 0;
-	private bool isDead = false; 
+public class Enemy : MonoBehaviour
+{
+    [SerializeField] private int healthPoints;
+    [SerializeField] private int rewardAmt;
+    [SerializeField] private Transform exitPoint; // Optional: if using a fixed exit
+    [SerializeField] private Animator anim;
+    [SerializeField] private float speed = 1f;
 
-	public bool IsDead {
-		get {
-			return isDead;
-		}
-	}
+    private List<Node> path;
+    private int pathIndex = 0;
+    private PathfindingManager pathfindingManager;
+    private Collider2D enemyCollider;
+    private bool isDead = false;
 
-	// Use this for initialization
-	void Start () {
-		enemy = GetComponent<Transform> ();
-		anim = GetComponent<Animator>();	
-		enemyCollider = GetComponent<Collider2D>();
-		GameManager.Instance.RegisterEnemy(this);	
-	}
+    public bool IsDead => isDead;
 
-	// Update is called once per frame
-	void Update () {
-		if (wayPoints != null && !isDead) {
-			navigationTime += Time.deltaTime;
-			if (navigationTime > navigationUpdate) {
-				if (target < wayPoints.Length) {
-					enemy.position = Vector2.MoveTowards(enemy.position, wayPoints[target].position, 0.8f * navigationTime);
-				} else {
-					enemy.position = Vector2.MoveTowards(enemy.position, exitPoint.position, 0.8f * navigationTime);
-				}
-				navigationTime = 0;
-			}
-		}
-	}
+    void Start()
+    {
+        enemyCollider = GetComponent<Collider2D>();
+        anim = GetComponent<Animator>();
+        GameManager.Instance.RegisterEnemy(this);
+        pathfindingManager = FindObjectOfType<PathfindingManager>();
+        CalculatePath();
+        // Subscribe to obstacle updates.
+        ObstacleEvents.OnObstaclesUpdated += RecalculatePath;
+    }
 
-	void OnTriggerEnter2D(Collider2D other) {
-		if (other.tag == "WayPoint")
-			target += 1;
-		else if (other.tag == "Finish") {
-			GameManager.Instance.TotalEscaped += 1;
-			GameManager.Instance.RoundEscaped += 1;
-			GameManager.Instance.UnRegister(this);
-			GameManager.Instance.isWaveOver();
-		} else if (other.tag == "Projectile") {
-			Projectile newP = other.gameObject.GetComponent<Projectile>();
-			enemyHit(newP.AttackStrength);
-			Destroy(other.gameObject);
-		}
-	}
+    void Update()
+    {
+        if (!isDead && path != null && pathIndex < path.Count)
+        {
+            FollowPath();
+        }
+    }
 
-	public void enemyHit(int hitPoints) {
-		if (healthPoints - hitPoints > 0) {
-			anim.Play("Hurt");
-			GameManager.Instance.AudioSource.PlayOneShot(SoundManager.Instance.Hit);
-			healthPoints -= hitPoints;
-		} else {
-			die();
-		}
-	}
+    private void FollowPath()
+    {
+        if (path == null || pathIndex >= path.Count)
+        {
+            HandleEscape();
+            return;
+        }
 
-	public void die() {
-		isDead = true;
-		anim.SetTrigger("didDie");
-		GameManager.Instance.TotalKilled += 1;
-		enemyCollider.enabled = false;
-		GameManager.Instance.addMoney(rewardAmt);
-		GameManager.Instance.AudioSource.PlayOneShot(SoundManager.Instance.Die);
-		GameManager.Instance.isWaveOver();
-		
-	}
+        Vector3 targetPos = path[pathIndex].worldPosition;
+        transform.position = Vector3.MoveTowards(transform.position, targetPos, speed * Time.deltaTime);
+        if (Vector3.Distance(transform.position, targetPos) < 0.1f)
+        {
+            pathIndex++;
+        }
+        if (pathIndex >= path.Count)
+        {
+            HandleEscape();
+        }
+    }
+
+    public void CalculatePath()
+    {
+        // For simplicity, choose the closest object tagged "Finish"
+        GameObject[] finishPoints = GameObject.FindGameObjectsWithTag("Finish");
+        if (finishPoints.Length == 0)
+        {
+            Debug.LogError("No finish points found!");
+            return;
+        }
+        GameObject closest = finishPoints[0];
+        float minDist = Vector3.Distance(transform.position, closest.transform.position);
+        foreach (GameObject fp in finishPoints)
+        {
+            float d = Vector3.Distance(transform.position, fp.transform.position);
+            if (d < minDist)
+            {
+                minDist = d;
+                closest = fp;
+            }
+        }
+        path = pathfindingManager.FindPath(transform.position, closest.transform.position);
+        if (path == null || path.Count == 0)
+        {
+            Debug.LogError("No valid path found for enemy!");
+        }
+        pathIndex = 0;
+    }
+
+    public void RecalculatePath()
+    {
+        if (!isDead)
+        {
+            CalculatePath();
+            pathIndex = 0;
+        }
+    }
+
+    private void HandleEscape()
+    {
+        // Increment both total and round escapes.
+        GameManager.Instance.TotalEscaped++;
+        GameManager.Instance.RoundEscaped++;
+        GameManager.Instance.UnRegister(this);
+        Destroy(gameObject);
+    }
+
+    public void enemyHit(int damage)
+    {
+        if (healthPoints > damage)
+        {
+            healthPoints -= damage;
+            anim.Play("Hurt");
+            GameManager.Instance.AudioSource.PlayOneShot(SoundManager.Instance.Hit);
+        }
+        else
+        {
+            Die();
+        }
+    }
+
+    private void Die()
+    {
+        isDead = true;
+        anim.SetTrigger("didDie");
+        GameManager.Instance.TotalKilled++;
+        enemyCollider.enabled = false;
+        GameManager.Instance.addMoney(rewardAmt);
+        GameManager.Instance.AudioSource.PlayOneShot(SoundManager.Instance.Die);
+        GameManager.Instance.UnRegister(this);
+        Destroy(gameObject);
+        GameManager.Instance.isWaveOver();
+    }
+
+    void OnTriggerEnter2D(Collider2D other)
+    {
+        if (other.CompareTag("Finish"))
+        {
+            GameManager.Instance.TotalEscaped++;
+            GameManager.Instance.RoundEscaped++;
+            GameManager.Instance.UnRegister(this);
+            GameManager.Instance.isWaveOver();
+        }
+        else if (other.CompareTag("Projectile"))
+        {
+            Projectile proj = other.GetComponent<Projectile>();
+            if (proj != null)
+                enemyHit(proj.AttackStrength);
+            Destroy(other.gameObject);
+        }
+    }
+
+    void OnDestroy()
+    {
+        ObstacleEvents.OnObstaclesUpdated -= RecalculatePath;
+    }
 }

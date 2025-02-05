@@ -1,113 +1,127 @@
 ﻿using UnityEngine;
-using System.Collections.Generic;
 using System.Collections;
+using System.Collections.Generic;
 
-public class Tower : MonoBehaviour {
+public abstract class Tower : MonoBehaviour
+{
+    [SerializeField]
+    protected float timeBetweenAttacks;
+    [SerializeField]
+    protected float attackRadius;
+    [SerializeField]
+    protected Projectile projectilePrefab;  // Must be assigned in the Inspector for each concrete tower
 
-	[SerializeField]
-	private float timeBetweenAttacks;
-	[SerializeField]
-	private float attackRadius;
-	[SerializeField]
-	private Projectile projectile;
-	private bool isAttack = false; 
-	private Enemy targetEnemy = null;
-	private float attackCounter;
-	private AudioSource audioSource;
+    protected AudioSource audioSource;
+    protected bool isAttacking = false;
+    protected Enemy targetEnemy = null;
+    protected float attackCounter;
 
-	void Start() {
-		audioSource = GetComponent<AudioSource>();
-	}
+    protected virtual void Start()
+    {
+        audioSource = GetComponent<AudioSource>();
+        // When the tower is placed, notify the system that obstacles changed.
+        ObstacleEvents.NotifyObstaclesUpdated();
+    }
 
-	public virtual void Update() {
-		attackCounter -= Time.deltaTime;
-		if (targetEnemy == null || targetEnemy.IsDead) {
-			Enemy nearestEnemy = GetNearestEnemyInRange();
-			if (nearestEnemy != null && Vector2.Distance(transform.position, nearestEnemy.transform.position) <= attackRadius) {
-				targetEnemy = nearestEnemy;
-			}
-		} else { 
-			if (attackCounter <= 0f) {
-				isAttack = true;
-			// Reset attack counter
-				attackCounter = timeBetweenAttacks;
-			} else {
-				isAttack = false; 
-			}
-			if (Vector2.Distance(transform.position, targetEnemy.transform.position) > attackRadius) {
-				targetEnemy = null;
-			}
-		} 
-	}
+    protected virtual void Update()
+    {
+        attackCounter -= Time.deltaTime;
 
-	void FixedUpdate() {
-		if (isAttack) {
-			Attack();
-		}
-	}
-	
-	public void Attack() {
-		isAttack = false;
-		Projectile newProjectile = Instantiate(projectile) as Projectile;
-		newProjectile.transform.localPosition = transform.localPosition;
-		if (newProjectile.ProjectileType == proType.arrow) {
-			audioSource.PlayOneShot(SoundManager.Instance.Arrow);
-		} else if (newProjectile.ProjectileType == proType.fireball) {
-			audioSource.PlayOneShot(SoundManager.Instance.Fireball);
-		}else if (newProjectile.ProjectileType == proType.rock) {
-			audioSource.PlayOneShot(SoundManager.Instance.Rock);
-		}
-		if (targetEnemy == null) {
-			Destroy(newProjectile);
-		}
-		else {
-    		StartCoroutine(MoveProjectile(newProjectile));
- 		}
-	}
+        if (targetEnemy == null || targetEnemy.IsDead)
+        {
+            targetEnemy = GetNearestEnemyInRange();
+        }
 
-	IEnumerator MoveProjectile( Projectile projectile) {
-		while(getTargetDistance(targetEnemy) > 0.20f && projectile != null && targetEnemy != null) {
-			 var dir = targetEnemy.transform.localPosition - transform.localPosition;
-            var angleDirection = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
-            projectile.transform.rotation = Quaternion.AngleAxis(angleDirection, Vector3.forward);
-            projectile.transform.localPosition = Vector2.MoveTowards(projectile.transform.localPosition, targetEnemy.transform.localPosition, 5f * Time.deltaTime);
+        if (targetEnemy != null)
+        {
+            if (attackCounter <= 0f)
+            {
+                isAttacking = true;
+                attackCounter = timeBetweenAttacks;
+            }
+            else
+            {
+                isAttacking = false;
+            }
+
+            if (Vector2.Distance(transform.position, targetEnemy.transform.position) > attackRadius)
+            {
+                targetEnemy = null;
+            }
+        }
+    }
+
+    protected virtual void FixedUpdate()
+    {
+        if (isAttacking)
+        {
+            Attack();
+        }
+    }
+
+    protected virtual void Attack()
+    {
+        if (targetEnemy == null)
+            return;
+
+        // Instantiate the projectile (the concrete prefab is assigned in the Inspector).
+        Projectile proj = Instantiate(projectilePrefab);
+        proj.transform.position = transform.position;
+        PlayProjectileSound(proj.ProjectileType);
+        StartCoroutine(MoveProjectile(proj));
+    }
+
+    protected virtual IEnumerator MoveProjectile(Projectile proj)
+    {
+        while (proj != null && targetEnemy != null &&
+               Vector2.Distance(transform.position, targetEnemy.transform.position) > 0.2f)
+        {
+            Vector3 direction = targetEnemy.transform.position - transform.position;
+            float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+            proj.transform.rotation = Quaternion.AngleAxis(angle, Vector3.forward);
+            proj.transform.position = Vector2.MoveTowards(proj.transform.position, targetEnemy.transform.position, 5f * Time.deltaTime);
             yield return null;
-		}
+        }
+        if (proj != null)
+        {
+            Destroy(proj.gameObject);
+        }
+    }
 
-		if(projectile != null || targetEnemy == null){
-			Destroy(projectile);
-		}
-	}
+    protected virtual Enemy GetNearestEnemyInRange()
+    {
+        Enemy nearest = null;
+        float minDist = float.MaxValue;
+        foreach (Enemy enemy in GameManager.Instance.EnemyList)
+        {
+            if (enemy != null && !enemy.IsDead)
+            {
+                float dist = Vector2.Distance(transform.position, enemy.transform.position);
+                if (dist < minDist && dist <= attackRadius)
+                {
+                    minDist = dist;
+                    nearest = enemy;
+                }
+            }
+        }
+        return nearest;
+    }
 
-	private float getTargetDistance(Enemy thisEnemy) {
-		if (thisEnemy == null){
-			thisEnemy = GetNearestEnemyInRange();
-			if (thisEnemy == null) {
-				return 0f;
-			}
-		} 
-		return Mathf.Abs(Vector2.Distance(transform.localPosition, thisEnemy.transform.localPosition));
-	}
-
-	private List<Enemy> GetEnemiesInRange() {
-		List<Enemy> enemiesInRange = new List<Enemy>();
-		foreach (Enemy enemy in GameManager.Instance.EnemyList) {
-			if (Vector2.Distance(transform.localPosition, enemy.transform.localPosition) <= attackRadius && !enemy.IsDead) {
-				enemiesInRange.Add(enemy);
-			}
-		}
-		return enemiesInRange;
-	}
-
-	private Enemy GetNearestEnemyInRange() {
-		Enemy nearestEnemy = null;
-		float smallestDistance = float.PositiveInfinity;
-		foreach (Enemy enemy in GetEnemiesInRange()) {
-			if (Vector2.Distance(transform.localPosition, enemy.transform.localPosition) < smallestDistance) {
-				smallestDistance = Vector2.Distance(transform.localPosition, enemy.transform.localPosition);
-				nearestEnemy = enemy;
-			}
-		}
-		return nearestEnemy;
-	}
+    protected virtual void PlayProjectileSound(proType type)
+    {
+        if (audioSource == null)
+            return;
+        switch (type)
+        {
+            case proType.Arrow:
+                audioSource.PlayOneShot(SoundManager.Instance.Arrow);
+                break;
+            case proType.Fireball:
+                audioSource.PlayOneShot(SoundManager.Instance.Fireball);
+                break;
+            case proType.Rock:
+                audioSource.PlayOneShot(SoundManager.Instance.Rock);
+                break;
+        }
+    }
 }
