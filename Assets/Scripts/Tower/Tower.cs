@@ -92,7 +92,7 @@ public abstract class Tower : MonoBehaviour
     {
         Enemy nearest = null;
         float minDist = float.MaxValue;
-        foreach (Enemy enemy in GameManager.Instance.EnemyList)
+        foreach (Enemy enemy in EnemyManager.Instance.EnemyList)
         {
             if (enemy != null && !enemy.IsDead)
             {
