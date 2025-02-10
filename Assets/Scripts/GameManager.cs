@@ -26,14 +26,12 @@ public class GameManager : Singleton<GameManager>
     [SerializeField] private int waveNumber = 0;
 
     private int totalMoney = 10;
-    private int totalEscaped = 0;      // Cumulative escapes (if desired)
-    private int roundEscaped = 0;      // Escapes in the current wave
+    private int totalEscaped = 0;      // Escapes cumulées
+    private int roundEscaped = 0;        // Escapes pour la vague en cours
     private int totalKilled = 0;
     private int enemiesToSpawn = 0;
     private gameStatus currentState = gameStatus.play;
     private AudioSource audioSource;
-
-    public List<Enemy> EnemyList = new List<Enemy>();
 
     public gameStatus CurrentState => currentState;
     public int WaveNumber { get => waveNumber; set => waveNumber = value; }
@@ -49,7 +47,7 @@ public class GameManager : Singleton<GameManager>
         }
     }
 
-    // Expose the round escapes so that Enemy scripts can increment it.
+    // Permet aux scripts ennemis d'incrémenter le compteur
     public int RoundEscaped
     {
         get => roundEscaped;
@@ -89,21 +87,21 @@ public class GameManager : Singleton<GameManager>
         }
     }
 
+    // Ces méthodes ne font plus gérer la liste d'ennemis localement,
+    // elles délèguent directement à EnemyManager.
     public void RegisterEnemy(Enemy enemy)
     {
-        if (enemy != null && !EnemyList.Contains(enemy))
+        if (enemy != null)
         {
-            EnemyList.Add(enemy);
-            Debug.Log("Registered enemy: " + enemy.name);
+            EnemyManager.Instance.RegisterEnemy(enemy);
         }
     }
 
     public void UnRegister(Enemy enemy)
     {
-        if (enemy != null && EnemyList.Contains(enemy))
+        if (enemy != null)
         {
-            EnemyList.Remove(enemy);
-            Debug.Log("Unregistered enemy: " + enemy.name);
+            EnemyManager.Instance.UnregisterEnemy(enemy);
         }
         isWaveOver();
     }
@@ -118,12 +116,11 @@ public class GameManager : Singleton<GameManager>
         TotalMoney -= amount;
     }
 
-    // Check if the wave is over (when the number of enemies that escaped this round plus the number killed equals totalEnemies).
+    // Vérifie si la vague est terminée (c'est-à-dire si le nombre d'ennemis tués et d'évasions atteint totalEnemies).
     public void isWaveOver()
     {
         if ((roundEscaped + totalKilled) >= totalEnemies)
         {
-            // Optionally update enemiesToSpawn; here we set it to waveNumber.
             enemiesToSpawn = waveNumber;
             setCurrentGameState();
             showMenu();
@@ -172,11 +169,12 @@ public class GameManager : Singleton<GameManager>
                 break;
         }
 
-        if (EnemyList.Count > 0)
+        // On vérifie maintenant la liste d'ennemis via EnemyManager
+        if (EnemyManager.Instance.EnemyList.Count > 0)
             DestroyAllEnemies();
 
         totalKilled = 0;
-        roundEscaped = 0; // Reset round escapes for the new wave.
+        roundEscaped = 0; // Réinitialisation pour la nouvelle vague.
         waveLabel.text = "Wave " + (waveNumber + 1);
         StartCoroutine(SpawnEnemies());
         GameStatusImage.gameObject.SetActive(false);
@@ -186,28 +184,29 @@ public class GameManager : Singleton<GameManager>
     {
         if (enemyPrefabs == null || enemyPrefabs.Length == 0)
         {
-            Debug.LogWarning("No enemy prefabs available to spawn. Assign prefabs in the Inspector.");
+            Debug.LogWarning("Aucun prefab d'ennemi n'est assigné. Assignez-le dans l'Inspector.");
             yield break;
         }
 
-        if (enemiesPerSpawn > 0 && EnemyList.Count < totalEnemies)
+        // On utilise désormais EnemyManager.Instance.EnemyList.Count pour comparer
+        if (enemiesPerSpawn > 0 && EnemyManager.Instance.EnemyList.Count < totalEnemies)
         {
             for (int i = 0; i < enemiesPerSpawn; i++)
             {
-                if (EnemyList.Count < totalEnemies)
+                if (EnemyManager.Instance.EnemyList.Count < totalEnemies)
                 {
-                    // For now, spawn the first enemy type.
                     GameObject enemyGO = Instantiate(enemyPrefabs[0]);
                     GameObject spawnPoint = spawnPoints[Random.Range(0, spawnPoints.Count)];
                     enemyGO.transform.position = spawnPoint.transform.position;
                     Enemy enemyComp = enemyGO.GetComponent<Enemy>();
                     if (enemyComp != null)
                     {
-                        RegisterEnemy(enemyComp);
+                        // L'enregistrement de l'ennemi est normalement effectué dans Enemy.Start().
+                        // Si nécessaire, vous pouvez aussi appeler EnemyManager.Instance.RegisterEnemy(enemyComp);
                     }
                     else
                     {
-                        Debug.LogError("Spawned enemy is missing the Enemy component!");
+                        Debug.LogError("L'ennemi instancié ne possède pas le composant Enemy !");
                     }
                 }
             }
@@ -218,14 +217,7 @@ public class GameManager : Singleton<GameManager>
 
     public void DestroyAllEnemies()
     {
-        foreach (Enemy enemy in new List<Enemy>(EnemyList))
-        {
-            if (enemy != null)
-            {
-                Destroy(enemy.gameObject);
-            }
-        }
-        EnemyList.Clear();
+        EnemyManager.Instance.DestroyAllEnemies();
     }
 
     public void showMenu()
