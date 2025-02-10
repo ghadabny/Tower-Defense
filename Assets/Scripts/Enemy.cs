@@ -22,7 +22,7 @@ public class Enemy : MonoBehaviour
     {
         enemyCollider = GetComponent<Collider2D>();
         anim = GetComponent<Animator>();
-        GameManager.Instance.RegisterEnemy(this);
+        EnemyManager.Instance.RegisterEnemy(this);
         pathfindingManager = FindObjectOfType<PathfindingManager>();
         CalculatePath();
         // Subscribe to obstacle updates.
@@ -125,7 +125,7 @@ public class Enemy : MonoBehaviour
         enemyCollider.enabled = false;
         GameManager.Instance.addMoney(rewardAmt);
         GameManager.Instance.AudioSource.PlayOneShot(SoundManager.Instance.Die);
-        GameManager.Instance.UnRegister(this);
+        EnemyManager.Instance.UnregisterEnemy(this);
         Destroy(gameObject);
         GameManager.Instance.isWaveOver();
     }
@@ -136,7 +136,7 @@ public class Enemy : MonoBehaviour
         {
             GameManager.Instance.TotalEscaped++;
             GameManager.Instance.RoundEscaped++;
-            GameManager.Instance.UnRegister(this);
+            EnemyManager.Instance.UnregisterEnemy(this);
             GameManager.Instance.isWaveOver();
         }
         else if (other.CompareTag("Projectile"))
