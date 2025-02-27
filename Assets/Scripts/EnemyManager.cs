@@ -7,7 +7,6 @@ public class EnemyManager : Singleton<EnemyManager>
     public List<Enemy> EnemyList => enemyList;
     public int EnemyCount => enemyList.Count;
 
-
     public void RegisterEnemy(Enemy enemy)
     {
         if (enemy != null && !enemyList.Contains(enemy))
@@ -47,5 +46,26 @@ public class EnemyManager : Singleton<EnemyManager>
             UIManager.Instance.ShowGameStatus(GameManager.Instance.CurrentState, GameManager.Instance.AudioSource);
         }
     }
+
+    public void EnemyEscaped(Enemy enemy)
+    {
+        GameManager.Instance.TotalEscaped++;
+        GameManager.Instance.RoundEscaped++;
+        UnregisterEnemy(enemy);
+        Destroy(enemy.gameObject);
+        CheckWaveStatus();
+    }
+
+    public void EnemyKilled(Enemy enemy)
+    {
+        GameManager.Instance.TotalKilled++;
+        EconomyManager.Instance.AddMoney(enemy.RewardAmount);
+        GameManager.Instance.AudioSource.PlayOneShot(SoundManager.Instance.Die);
+        UnregisterEnemy(enemy);
+        Destroy(enemy.gameObject);
+        CheckWaveStatus();
+    }
+
+
 
 }

@@ -6,7 +6,6 @@ public class Enemy : MonoBehaviour
 {
     [SerializeField] private int healthPoints;
     [SerializeField] private int rewardAmt;
-    [SerializeField] private Transform exitPoint; // Optional: if using a fixed exit
     [SerializeField] private Animator anim;
     [SerializeField] private float speed = 1f;
 
@@ -17,6 +16,7 @@ public class Enemy : MonoBehaviour
     private bool isDead = false;
 
     public bool IsDead => isDead;
+    public int RewardAmount => rewardAmt;
 
     void Start()
     {
@@ -25,7 +25,6 @@ public class Enemy : MonoBehaviour
         EnemyManager.Instance.RegisterEnemy(this);
         pathfindingManager = FindObjectOfType<PathfindingManager>();
         CalculatePath();
-        // Subscribe to obstacle updates.
         ObstacleEvents.OnObstaclesUpdated += RecalculatePath;
     }
 
@@ -59,7 +58,6 @@ public class Enemy : MonoBehaviour
 
     public void CalculatePath()
     {
-        // For simplicity, choose the closest object tagged "Finish"
         GameObject[] finishPoints = GameObject.FindGameObjectsWithTag("Finish");
         if (finishPoints.Length == 0)
         {
@@ -78,10 +76,6 @@ public class Enemy : MonoBehaviour
             }
         }
         path = pathfindingManager.FindPath(transform.position, closest.transform.position);
-        if (path == null || path.Count == 0)
-        {
-            Debug.LogError("No valid path found for enemy!");
-        }
         pathIndex = 0;
     }
 
@@ -96,11 +90,7 @@ public class Enemy : MonoBehaviour
 
     private void HandleEscape()
     {
-        // Increment both total and round escapes.
-        GameManager.Instance.TotalEscaped++;
-        GameManager.Instance.RoundEscaped++;
-        EnemyManager.Instance.UnregisterEnemy(this);
-        Destroy(gameObject);
+        EnemyManager.Instance.EnemyEscaped(this);
     }
 
     public void enemyHit(int damage)
@@ -121,30 +111,24 @@ public class Enemy : MonoBehaviour
     {
         isDead = true;
         anim.SetTrigger("didDie");
-        GameManager.Instance.TotalKilled++;
         enemyCollider.enabled = false;
-        EconomyManager.Instance.AddMoney(rewardAmt);
-        GameManager.Instance.AudioSource.PlayOneShot(SoundManager.Instance.Die);
-        EnemyManager.Instance.UnregisterEnemy(this);
-        Destroy(gameObject);
-        EnemyManager.Instance.CheckWaveStatus();
+        EnemyManager.Instance.EnemyKilled(this);
     }
 
     void OnTriggerEnter2D(Collider2D other)
     {
         if (other.CompareTag("Finish"))
         {
-            GameManager.Instance.TotalEscaped++;
-            GameManager.Instance.RoundEscaped++;
-            EnemyManager.Instance.UnregisterEnemy(this);
-            EnemyManager.Instance.CheckWaveStatus();
+            HandleEscape();
         }
         else if (other.CompareTag("Projectile"))
         {
             Projectile proj = other.GetComponent<Projectile>();
             if (proj != null)
+            {
                 enemyHit(proj.AttackStrength);
-            Destroy(other.gameObject);
+                Destroy(other.gameObject);
+            }
         }
     }
 
