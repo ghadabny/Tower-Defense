@@ -44,7 +44,7 @@ public class EnemyManager : Singleton<EnemyManager>
         if (enemyList.Count == 0)
         {
             GameManager.Instance.setCurrentGameState();
-            GameManager.Instance.showMenu();
+            UIManager.Instance.ShowGameStatus(GameManager.Instance.CurrentState, GameManager.Instance.AudioSource);
         }
     }
 

@@ -123,7 +123,7 @@ public class Enemy : MonoBehaviour
         anim.SetTrigger("didDie");
         GameManager.Instance.TotalKilled++;
         enemyCollider.enabled = false;
-        GameManager.Instance.addMoney(rewardAmt);
+        EconomyManager.Instance.AddMoney(rewardAmt);
         GameManager.Instance.AudioSource.PlayOneShot(SoundManager.Instance.Die);
         EnemyManager.Instance.UnregisterEnemy(this);
         Destroy(gameObject);
