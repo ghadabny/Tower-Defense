@@ -33,8 +33,9 @@ public class UIManager : Singleton<UIManager>
 
     public void UpdateWaveDisplay(int waveNumber)
     {
-        waveLabel.text = "Wave " + (waveNumber + 1);
+        waveLabel.text = "Wave " + waveNumber;
     }
+
 
     public void ShowGameStatus(gameStatus status, AudioSource audioSource)
     {
