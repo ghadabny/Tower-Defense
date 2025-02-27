@@ -99,7 +99,7 @@ public class Enemy : MonoBehaviour
         // Increment both total and round escapes.
         GameManager.Instance.TotalEscaped++;
         GameManager.Instance.RoundEscaped++;
-        GameManager.Instance.UnRegister(this);
+        EnemyManager.Instance.UnregisterEnemy(this);
         Destroy(gameObject);
     }
 
@@ -127,7 +127,7 @@ public class Enemy : MonoBehaviour
         GameManager.Instance.AudioSource.PlayOneShot(SoundManager.Instance.Die);
         EnemyManager.Instance.UnregisterEnemy(this);
         Destroy(gameObject);
-        GameManager.Instance.isWaveOver();
+        EnemyManager.Instance.CheckWaveStatus();
     }
 
     void OnTriggerEnter2D(Collider2D other)
@@ -137,7 +137,7 @@ public class Enemy : MonoBehaviour
             GameManager.Instance.TotalEscaped++;
             GameManager.Instance.RoundEscaped++;
             EnemyManager.Instance.UnregisterEnemy(this);
-            GameManager.Instance.isWaveOver();
+            EnemyManager.Instance.CheckWaveStatus();
         }
         else if (other.CompareTag("Projectile"))
         {
