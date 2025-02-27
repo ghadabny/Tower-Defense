@@ -10,22 +10,11 @@ public enum gameStatus
 
 public class GameManager : Singleton<GameManager>
 {
-    const float waitingTime = 1f;
-
     [SerializeField] private int totalWaves = 10;
-    [SerializeField] private List<Transform> spawnPoints;
     [SerializeField] private int totalEnemies = 3;
     [SerializeField] private int enemiesPerSpawn;
-    [SerializeField] private Text totalMoneyLabel;
-    [SerializeField] private Image GameStatusImage;
-    [SerializeField] private Text nextWaveBtnLabel;
-    [SerializeField] private Text escapedLabel;
-    [SerializeField] private Text waveLabel;
-    [SerializeField] private Text GameStatusLabel;
     [SerializeField] private int waveNumber = 0;
     [SerializeField] private EnemySpawner enemySpawner;
-
-    private int totalMoney = 10;
     private int totalEscaped = 0;
     private int roundEscaped = 0;
     private int totalKilled = 0;
@@ -42,30 +31,18 @@ public class GameManager : Singleton<GameManager>
         set
         {
             totalEscaped = value;
-            escapedLabel.text = "Escaped " + totalEscaped + "/10";
+            UIManager.Instance.UpdateEscapedDisplay(totalEscaped);
         }
     }
 
     public int RoundEscaped { get => roundEscaped; set => roundEscaped = value; }
     public int TotalKilled { get => totalKilled; set => totalKilled = value; }
-
-    public int TotalMoney
-    {
-        get => totalMoney;
-        set
-        {
-            totalMoney = value;
-            totalMoneyLabel.text = totalMoney.ToString();
-        }
-    }
-
     public AudioSource AudioSource => audioSource;
 
     void Start()
     {
-        GameStatusImage.gameObject.SetActive(false);
         audioSource = GetComponent<AudioSource>();
-        showMenu();
+        UIManager.Instance.ShowGameStatus(currentState, audioSource);
     }
 
     void Update()
@@ -76,9 +53,6 @@ public class GameManager : Singleton<GameManager>
             TowerManager.Instance.towerBtnPressed = null;
         }
     }
-
-    public void addMoney(int amount) => TotalMoney += amount;
-    public void subtractMoney(int amount) => TotalMoney -= amount;
 
     public void setCurrentGameState()
     {
@@ -105,43 +79,20 @@ public class GameManager : Singleton<GameManager>
                 TotalEscaped = 0;
                 waveNumber = 0;
                 enemiesToSpawn = 0;
-                TotalMoney = 10;
+                EconomyManager.Instance.TotalMoney = 10;
                 TowerManager.Instance.DestroyAllTowers();
                 TowerManager.Instance.RenameTagsBuildSites();
-                totalMoneyLabel.text = TotalMoney.ToString();
-                escapedLabel.text = "Escaped " + TotalEscaped + "/10";
+                UIManager.Instance.UpdateEscapedDisplay(TotalEscaped);
                 audioSource.PlayOneShot(SoundManager.Instance.NewGame);
                 break;
         }
 
-        totalKilled = 0;
         roundEscaped = 0;
-        waveLabel.text = "Wave " + (waveNumber + 1);
-        StartCoroutine(enemySpawner.SpawnEnemies(totalEnemies, enemiesPerSpawn));
-        GameStatusImage.gameObject.SetActive(false);
-    }
+        UIManager.Instance.UpdateWaveDisplay(waveNumber);
 
-    public void showMenu()
-    {
-        switch (currentState)
-        {
-            case gameStatus.gameover:
-                GameStatusLabel.text = "Gameover";
-                audioSource.PlayOneShot(SoundManager.Instance.Gameover);
-                nextWaveBtnLabel.text = "Play again";
-                break;
-            case gameStatus.next:
-                nextWaveBtnLabel.text = "Next Wave";
-                GameStatusLabel.text = "Wave " + (waveNumber + 2) + " next.";
-                break;
-            case gameStatus.play:
-                nextWaveBtnLabel.text = "Play";
-                break;
-            case gameStatus.win:
-                nextWaveBtnLabel.text = "Play";
-                GameStatusLabel.text = "You Won!";
-                break;
-        }
-        GameStatusImage.gameObject.SetActive(true);
+        UIManager.Instance.HideGameStatus();
+
+        StartCoroutine(enemySpawner.SpawnEnemies(totalEnemies, enemiesPerSpawn));
     }
 }
+
