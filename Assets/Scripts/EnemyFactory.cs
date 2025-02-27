@@ -1,37 +1,29 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 public enum EnemyType
 {
-    Basic
-    // Future types: Fast, Heavy, etc.
+    Basic,
+    Fast,
+    Tank
 }
 
 public static class EnemyFactory
 {
-    /// <summary>
-    /// Creates and returns an enemy GameObject of the given type at the specified position.
-    /// </summary>
+    private static Dictionary<EnemyType, GameObject> enemyPrefabs = new Dictionary<EnemyType, GameObject>();
+
+    public static void Initialize(Dictionary<EnemyType, GameObject> prefabs)
+    {
+        enemyPrefabs = prefabs;
+    }
+
     public static GameObject CreateEnemy(EnemyType type, Vector3 position)
     {
-        GameObject prefab = null;
-        switch (type)
-        {
-            case EnemyType.Basic:
-            default:
-                // Assumes a prefab exists at Resources/Prefabs/BasicEnemy
-                prefab = Resources.Load<GameObject>("Prefabs/BasicEnemy");
-                break;
-        }
-        if (prefab != null)
-        {
-            GameObject enemy = Object.Instantiate(prefab, position, Quaternion.identity);
-            enemy.tag = "Enemy"; // Ensure enemy is tagged if needed.
-            return enemy;
-        }
-        else
+        if (!enemyPrefabs.ContainsKey(type))
         {
             Debug.LogError("Enemy prefab not found for type: " + type);
             return null;
         }
+        return Object.Instantiate(enemyPrefabs[type], position, Quaternion.identity);
     }
 }
