@@ -114,20 +114,11 @@ public class GameManager : Singleton<GameManager>
                 break;
         }
 
-        if (EnemyManager.Instance.EnemyCount > 0)
-            EnemyManager.Instance.DestroyAllEnemies();
-
-
         totalKilled = 0;
         roundEscaped = 0;
         waveLabel.text = "Wave " + (waveNumber + 1);
         StartCoroutine(enemySpawner.SpawnEnemies(totalEnemies, enemiesPerSpawn));
         GameStatusImage.gameObject.SetActive(false);
-    }
-
-    public void DestroyAllEnemies()
-    {
-        EnemyManager.Instance.DestroyAllEnemies();
     }
 
     public void showMenu()
