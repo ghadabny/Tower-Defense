@@ -77,29 +77,8 @@ public class GameManager : Singleton<GameManager>
         }
     }
 
-    public void RegisterEnemy(Enemy enemy)
-    {
-        EnemyManager.Instance.RegisterEnemy(enemy);
-    }
-
-    public void UnRegister(Enemy enemy)
-    {
-        EnemyManager.Instance.UnregisterEnemy(enemy);
-        isWaveOver();
-    }
-
     public void addMoney(int amount) => TotalMoney += amount;
     public void subtractMoney(int amount) => TotalMoney -= amount;
-
-    public void isWaveOver()
-    {
-        if ((roundEscaped + totalKilled) >= totalEnemies)
-        {
-            enemiesToSpawn = waveNumber;
-            setCurrentGameState();
-            showMenu();
-        }
-    }
 
     public void setCurrentGameState()
     {
@@ -135,8 +114,9 @@ public class GameManager : Singleton<GameManager>
                 break;
         }
 
-        if (EnemyManager.Instance.EnemyList.Count > 0)
-            DestroyAllEnemies();
+        if (EnemyManager.Instance.EnemyCount > 0)
+            EnemyManager.Instance.DestroyAllEnemies();
+
 
         totalKilled = 0;
         roundEscaped = 0;
