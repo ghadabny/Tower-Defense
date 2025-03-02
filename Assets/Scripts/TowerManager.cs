@@ -60,7 +60,7 @@ public class TowerManager : Singleton<TowerManager>
                 if (newTower != null)
                 {
                     TowerList.Add(newTower);
-                    GameManager.Instance.subtractMoney(towerBtnPressed.TowerPrice);
+                    EconomyManager.Instance.SubtractMoney(towerBtnPressed.TowerPrice);
                     GameManager.Instance.AudioSource.PlayOneShot(SoundManager.Instance.BuildTower);
 
                     Grid grid = FindObjectOfType<Grid>();
@@ -103,7 +103,7 @@ public class TowerManager : Singleton<TowerManager>
 
     public void selectedTower(TowerButton towerBtn)
     {
-        if (towerBtn.TowerPrice <= GameManager.Instance.TotalMoney)
+        if (towerBtn.TowerPrice <= EconomyManager.Instance.TotalMoney)
         {
             towerBtnPressed = towerBtn;
             enableDragSprite(towerBtn.DragSprite);
@@ -112,7 +112,7 @@ public class TowerManager : Singleton<TowerManager>
 
     public void buyTower(int price)
     {
-        GameManager.Instance.subtractMoney(price);
+        EconomyManager.Instance.SubtractMoney(price);
         GameManager.Instance.AudioSource.PlayOneShot(SoundManager.Instance.BuildTower);
     }
 
