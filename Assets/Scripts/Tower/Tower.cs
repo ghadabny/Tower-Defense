@@ -1,25 +1,26 @@
 ﻿using UnityEngine;
-using System.Collections;
 using System.Collections.Generic;
 
 public abstract class Tower : MonoBehaviour
 {
-    [SerializeField]
-    protected float timeBetweenAttacks;
-    [SerializeField]
-    protected float attackRadius;
-    [SerializeField]
-    protected Projectile projectilePrefab;  // Must be assigned in the Inspector for each concrete tower
+    [SerializeField] protected float timeBetweenAttacks;
+    [SerializeField] protected float attackRadius;
+    [SerializeField] protected ProjectileType projectileType;
 
-    protected AudioSource audioSource;
-    protected bool isAttacking = false;
+    private ProjectileFactory projectileFactory; // ✅ Reference to ProjectileFactory
+
     protected Enemy targetEnemy = null;
     protected float attackCounter;
 
     protected virtual void Start()
     {
-        audioSource = GetComponent<AudioSource>();
-        // When the tower is placed, notify the system that obstacles changed.
+        projectileFactory = FindObjectOfType<ProjectileFactory>(); // ✅ Auto-find the factory
+
+        if (projectileFactory == null)
+        {
+            Debug.LogError("Tower: No ProjectileFactory found in the scene!");
+        }
+
         ObstacleEvents.NotifyObstaclesUpdated();
     }
 
@@ -32,59 +33,41 @@ public abstract class Tower : MonoBehaviour
             targetEnemy = GetNearestEnemyInRange();
         }
 
-        if (targetEnemy != null)
-        {
-            if (attackCounter <= 0f)
-            {
-                isAttacking = true;
-                attackCounter = timeBetweenAttacks;
-            }
-            else
-            {
-                isAttacking = false;
-            }
-
-            if (Vector2.Distance(transform.position, targetEnemy.transform.position) > attackRadius)
-            {
-                targetEnemy = null;
-            }
-        }
-    }
-
-    protected virtual void FixedUpdate()
-    {
-        if (isAttacking)
+        if (targetEnemy != null && attackCounter <= 0f)
         {
             Attack();
+            attackCounter = timeBetweenAttacks;
         }
     }
 
     protected virtual void Attack()
     {
         if (targetEnemy == null)
-            return;
-
-        // Instantiate the projectile (the concrete prefab is assigned in the Inspector).
-        Projectile proj = Instantiate(projectilePrefab);
-        proj.transform.position = transform.position;
-        PlayProjectileSound(proj.ProjectileType);
-        StartCoroutine(MoveProjectile(proj));
-    }
-
-    protected virtual IEnumerator MoveProjectile(Projectile proj)
-    {
-        while (proj != null && targetEnemy != null &&
-               Vector2.Distance(transform.position, targetEnemy.transform.position) > 0.2f)
         {
-            Vector3 direction = targetEnemy.transform.position - transform.position;
-            float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-            proj.transform.rotation = Quaternion.AngleAxis(angle, Vector3.forward);
-            proj.transform.position = Vector2.MoveTowards(proj.transform.position, targetEnemy.transform.position, 5f * Time.deltaTime);
-            yield return null;
+            return; // ✅ No target? Don't shoot.
         }
-        if (proj != null)
+
+        if (projectileFactory == null)
         {
-            Destroy(proj.gameObject);
+            Debug.LogError($"Tower {gameObject.name} has no ProjectileFactory assigned!");
+            return;
+        }
+
+        // ✅ Get the correct projectile prefab from factory
+        GameObject projectilePrefab = projectileFactory.GetProjectilePrefab(projectileType);
+        if (projectilePrefab == null)
+        {
+            Debug.LogError($"Tower {gameObject.name}: No prefab found for {projectileType}");
+            return;
+        }
+
+        // ✅ Instantiate and fire the projectile
+        GameObject projInstance = Instantiate(projectilePrefab, transform.position, Quaternion.identity);
+        Projectile projScript = projInstance.GetComponent<Projectile>();
+
+        if (projScript != null)
+        {
+            projScript.SetTarget(targetEnemy); // ✅ Assign enemy to projectile
         }
     }
 
@@ -92,6 +75,7 @@ public abstract class Tower : MonoBehaviour
     {
         Enemy nearest = null;
         float minDist = float.MaxValue;
+
         foreach (Enemy enemy in EnemyManager.Instance.EnemyList)
         {
             if (enemy != null && !enemy.IsDead)
@@ -105,23 +89,5 @@ public abstract class Tower : MonoBehaviour
             }
         }
         return nearest;
-    }
-
-    protected virtual void PlayProjectileSound(proType type)
-    {
-        if (audioSource == null)
-            return;
-        switch (type)
-        {
-            case proType.Arrow:
-                audioSource.PlayOneShot(SoundManager.Instance.Arrow);
-                break;
-            case proType.Fireball:
-                audioSource.PlayOneShot(SoundManager.Instance.Fireball);
-                break;
-            case proType.Rock:
-                audioSource.PlayOneShot(SoundManager.Instance.Rock);
-                break;
-        }
     }
 }
