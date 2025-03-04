@@ -7,14 +7,14 @@ public abstract class Tower : MonoBehaviour
     [SerializeField] protected float attackRadius;
     [SerializeField] protected ProjectileType projectileType;
 
-    private ProjectileFactory projectileFactory; // ✅ Reference to ProjectileFactory
+    private ProjectileFactory projectileFactory; 
 
     protected Enemy targetEnemy = null;
     protected float attackCounter;
 
     protected virtual void Start()
     {
-        projectileFactory = FindObjectOfType<ProjectileFactory>(); // ✅ Auto-find the factory
+        projectileFactory = FindObjectOfType<ProjectileFactory>(); 
 
         if (projectileFactory == null)
         {
@@ -44,7 +44,7 @@ public abstract class Tower : MonoBehaviour
     {
         if (targetEnemy == null)
         {
-            return; // ✅ No target? Don't shoot.
+            return; 
         }
 
         if (projectileFactory == null)
@@ -53,7 +53,7 @@ public abstract class Tower : MonoBehaviour
             return;
         }
 
-        // ✅ Get the correct projectile prefab from factory
+        
         GameObject projectilePrefab = projectileFactory.GetProjectilePrefab(projectileType);
         if (projectilePrefab == null)
         {
@@ -61,13 +61,13 @@ public abstract class Tower : MonoBehaviour
             return;
         }
 
-        // ✅ Instantiate and fire the projectile
+      
         GameObject projInstance = Instantiate(projectilePrefab, transform.position, Quaternion.identity);
         Projectile projScript = projInstance.GetComponent<Projectile>();
 
         if (projScript != null)
         {
-            projScript.SetTarget(targetEnemy); // ✅ Assign enemy to projectile
+            projScript.SetTarget(targetEnemy); 
         }
     }
 

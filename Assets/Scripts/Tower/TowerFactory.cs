@@ -13,7 +13,7 @@ public class TowerFactory : MonoBehaviour
     public GameObject castleTowerPrefab;
     public GameObject knightPostPrefab;
     public GameObject archerTowerPrefab;
-    public ProjectileFactory projectileFactory; // ✅ Add this field
+    public ProjectileFactory projectileFactory; 
 
     private Dictionary<TowerType, GameObject> prefabDictionary;
 

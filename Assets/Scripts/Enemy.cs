@@ -133,7 +133,7 @@ public class Enemy : MonoBehaviour
     }
     public void NotifyHit(Projectile projectile)
     {
-        enemyHit(projectile.AttackStrength); // ✅ The enemy alone decides how much damage to take
+        enemyHit(projectile.AttackStrength); 
     }
 
     void OnDestroy()

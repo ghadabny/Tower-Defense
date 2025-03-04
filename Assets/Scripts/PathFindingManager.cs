@@ -12,7 +12,7 @@ public class PathfindingManager : MonoBehaviour
         {
             grid = FindObjectOfType<Grid>();
         }
-        pathfinder = new Pathfinding(grid); // Our concrete strategy.
+        pathfinder = new Pathfinding(grid); 
     }
 
     public List<Node> FindPath(Vector3 start, Vector3 target)

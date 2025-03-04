@@ -48,9 +48,9 @@ public abstract class Projectile : MonoBehaviour
             Enemy enemy = other.GetComponent<Enemy>();
             if (enemy != null)
             {
-                enemy.NotifyHit(this); // ✅ Projectile simply tells enemy "I hit you"
+                enemy.NotifyHit(this);
             }
-            Destroy(gameObject); // ✅ Projectile disappears after hit
+            Destroy(gameObject);
         }
     }
 
