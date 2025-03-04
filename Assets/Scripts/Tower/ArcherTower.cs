@@ -6,15 +6,9 @@ public class ArcherTower : Tower
 
     protected override void Start()
     {
-        // Set defaults for ArcherTower.
-        timeBetweenAttacks = 1f;
-        attackRadius = 2f;
-
-        // The projectilePrefab (rock) must be assigned in the Inspector.
-        if (projectilePrefab == null)
-        {
-            Debug.LogError("ArcherTower: ProjectilePrefab (rock) is not assigned in the Inspector!");
-        }
+        timeBetweenAttacks = 0.5f;
+        attackRadius = 4f;
+        projectileType = ProjectileType.Arrow;
         base.Start();
     }
 }

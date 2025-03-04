@@ -6,15 +6,9 @@ public class KnightPost : Tower
 
     protected override void Start()
     {
-        // Set defaults for KnightPost.
-        timeBetweenAttacks = 2f;
-        attackRadius = 4f;
-
-        // The projectilePrefab (fireball) must be assigned in the Inspector.
-        if (projectilePrefab == null)
-        {
-            Debug.LogError("KnightPost: ProjectilePrefab (fireball) is not assigned in the Inspector!");
-        }
+        timeBetweenAttacks = 1.5f;
+        attackRadius = 5f;
+        projectileType = ProjectileType.Fireball;
         base.Start();
     }
 }

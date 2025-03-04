@@ -10,17 +10,17 @@ public enum TowerType
 
 public class TowerFactory : MonoBehaviour
 {
-    // Assign these prefab references in the Inspector.
     public GameObject castleTowerPrefab;
     public GameObject knightPostPrefab;
     public GameObject archerTowerPrefab;
+    public ProjectileFactory projectileFactory; // ✅ Add this field
 
     private Dictionary<TowerType, GameObject> prefabDictionary;
 
     private void Awake()
     {
-        // Build a dictionary of tower prefabs from the Inspector.
         prefabDictionary = new Dictionary<TowerType, GameObject>();
+
         if (castleTowerPrefab != null)
             prefabDictionary.Add(TowerType.CastleTower, castleTowerPrefab);
         else
@@ -37,18 +37,13 @@ public class TowerFactory : MonoBehaviour
             Debug.LogWarning("ArcherTower prefab not assigned in TowerFactory!");
     }
 
-    /// <summary>
-    /// Creates and returns an instantiated tower of the given type at the specified position.
-    /// The prefabs are assigned via the Inspector, so no file paths are used.
-    /// </summary>
     public GameObject CreateTower(TowerType type, Vector3 position)
     {
-        if (prefabDictionary != null && prefabDictionary.ContainsKey(type))
+        if (prefabDictionary.TryGetValue(type, out GameObject prefab))
         {
-            GameObject prefab = prefabDictionary[type];
-            // Instantiate the prefab so that you get a scene instance.
             GameObject towerInstance = Instantiate(prefab, position, Quaternion.identity);
-            towerInstance.tag = "Tower";  // Tag the tower for detection by the grid.
+            towerInstance.tag = "Tower";
+
             Debug.Log("Instantiated tower: " + towerInstance.name + " at " + position);
             return towerInstance;
         }
