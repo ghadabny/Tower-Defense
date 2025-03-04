@@ -12,7 +12,7 @@ public class UIManager : Singleton<UIManager>
 
     protected override void Awake()
     {
-        base.Awake(); // Initialisation du Singleton
+        base.Awake(); 
     }
 
     public void HideGameStatus()

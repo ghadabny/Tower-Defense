@@ -3,9 +3,8 @@ using System.Collections.Generic;
 
 public class Grid : MonoBehaviour
 {
-    // Define grid world size (in world units) and node size.
     public Vector2 gridWorldSize = new Vector2(20, 11);
-    public float nodeRadius = 0.5f; // Node diameter will be 1 unit.
+    public float nodeRadius = 0.5f;
     public Node[,] grid;
 
     private float nodeDiameter;
@@ -19,25 +18,24 @@ public class Grid : MonoBehaviour
         CreateGrid();
     }
 
-    // CreateGrid builds the grid and marks nodes as walkable unless a tower overlaps.
     public void CreateGrid()
     {
         grid = new Node[gridSizeX, gridSizeY];
-        // Compute the bottom‐left corner (assume the Grid GameObject is centered)
+       
         Vector3 worldBottomLeft = transform.position - new Vector3(gridWorldSize.x / 2, gridWorldSize.y / 2, 0);
 
-        // Find all obstacles (towers) by tag.
+        
         GameObject[] obstacles = GameObject.FindGameObjectsWithTag("Tower");
 
         for (int x = 0; x < gridSizeX; x++)
         {
             for (int y = 0; y < gridSizeY; y++)
             {
-                // Compute the center of this node.
+        
                 Vector3 worldPoint = worldBottomLeft + Vector3.right * (x * nodeDiameter + nodeRadius)
                                                       + Vector3.up * (y * nodeDiameter + nodeRadius);
 
-                // Assume the node is walkable unless an obstacle covers its center.
+           
                 bool walkable = true;
                 foreach (GameObject obs in obstacles)
                 {
@@ -54,7 +52,7 @@ public class Grid : MonoBehaviour
         }
     }
 
-    // Call this method to rebuild the grid when obstacles (towers) change.
+ 
     public void RecalculateGrid()
     {
         CreateGrid();
@@ -97,7 +95,7 @@ public class Grid : MonoBehaviour
 
     void OnDrawGizmos()
     {
-        // Draw the grid outline.
+      
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireCube(transform.position, new Vector3(gridWorldSize.x, gridWorldSize.y, 1));
 
@@ -105,7 +103,7 @@ public class Grid : MonoBehaviour
         {
             foreach (Node node in grid)
             {
-                // White for walkable, red for unwalkable.
+             
                 Gizmos.color = node.walkable ? Color.white : Color.red;
                 Gizmos.DrawCube(node.worldPosition, Vector3.one * (nodeDiameter - 0.1f));
             }

@@ -17,7 +17,7 @@ public class TowerManager : Singleton<TowerManager>
 
     void Update()
     {
-        // If the left mouse button is clicked.
+      
         if (Input.GetMouseButtonDown(0))
         {
             Vector2 worldPoint = Camera.main.ScreenToWorldPoint(Input.mousePosition);
@@ -36,7 +36,7 @@ public class TowerManager : Singleton<TowerManager>
         }
     }
 
-    // Helper method to snap a raw position to the center of a grid cell (assumes 1x1 units).
+ 
     private Vector3 GetSnappedPosition(Vector3 rawPosition)
     {
         float snappedX = Mathf.Floor(rawPosition.x) + 0.5f;
@@ -50,11 +50,11 @@ public class TowerManager : Singleton<TowerManager>
         {
             Vector3 position = GetSnappedPosition(hit.transform.position);
 
-            // Get the TowerFactory from the scene.
+         
             TowerFactory factory = FindObjectOfType<TowerFactory>();
             if (factory != null)
             {
-                // Use the TowerButton's TowerType property.
+               
                 GameObject newTower = factory.CreateTower(towerBtnPressed.TowerType, position);
 
                 if (newTower != null)

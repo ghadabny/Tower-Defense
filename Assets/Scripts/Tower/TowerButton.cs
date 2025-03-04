@@ -4,12 +4,11 @@
 public class TowerButton : MonoBehaviour
 {
     [SerializeField]
-    private GameObject towerPrefab;  // Tower prefab reference
+    private GameObject towerPrefab; 
     [SerializeField]
     private Sprite dragSprite;
     [SerializeField]
     private int towerPrice;
-    // Add this field to indicate the type of tower this button creates.
     [SerializeField]
     private TowerType towerType;
 
