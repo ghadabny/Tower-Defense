@@ -1,32 +1,21 @@
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine.UI;
 using UnityEngine;
 
 public class EnemySpawner : MonoBehaviour
 {
-    [SerializeField] private List<GameObject> enemyPrefabs; // Assigné dans l'Inspector
-    [SerializeField] private List<Transform> spawnPoints;
-    [SerializeField] private float spawnInterval = 1f;
+   [SerializeField] private List<GameObject> enemyPrefabs; // Liste des prefabs d'ennemis
+    [SerializeField] private List<Transform> spawnPoints;   // Liste des points de spawn
+    [SerializeField] private float spawnInterval = 1f;     // Intervalle de spawn
 
-    private void Awake()
+    void Start()
     {
-        if (enemyPrefabs == null || enemyPrefabs.Count == 0)
-        {
-            Debug.LogError("Aucun prefab d'ennemi n'est assigné dans EnemySpawner !");
-            return;
-        }
-
-        // Associer chaque prefab à un type d'ennemi
-        Dictionary<EnemyType, GameObject> prefabsDict = new Dictionary<EnemyType, GameObject>
-        {
-            { EnemyType.Basic, enemyPrefabs[0] },
-            { EnemyType.Fast, enemyPrefabs.Count > 1 ? enemyPrefabs[1] : enemyPrefabs[0] },
-            { EnemyType.Tank, enemyPrefabs.Count > 2 ? enemyPrefabs[2] : enemyPrefabs[0] }
-        };
-
-        EnemyFactory.Initialize(prefabsDict); // Initialisation de la factory
+        // Démarre la coroutine pour générer les ennemis
+        //StartCoroutine(SpawnEnemies(10, 2)); // Génère 10 ennemis, 2 par vague
     }
 
+    // Coroutine pour générer les ennemis
     public IEnumerator SpawnEnemies(int totalEnemies, int enemiesPerSpawn)
     {
         int spawned = 0;
@@ -34,12 +23,24 @@ public class EnemySpawner : MonoBehaviour
         {
             for (int i = 0; i < enemiesPerSpawn && spawned < totalEnemies; i++)
             {
-                Transform spawnPoint = spawnPoints[Random.Range(0, spawnPoints.Count)];
-                GameObject enemyGO = EnemyFactory.CreateEnemy(EnemyType.Basic, spawnPoint.position);
+                // Utilise le premier (et seul) point de spawn
+                Transform spawnPoint = spawnPoints[0];
+                // Génère un ennemi à ce point de spawn
+                GameObject enemyGO = EnemyFactory.CreateEnemy(GetRandomEnemyType(), spawnPoint.position);
                 if (enemyGO == null) continue;
                 spawned++;
+                Debug.Log($"Enemy spawned at {spawnPoint.position}");
             }
             yield return new WaitForSeconds(spawnInterval);
         }
+    }
+
+    // Méthode pour choisir un type d'ennemi aléatoire
+    private EnemyType GetRandomEnemyType()
+    {
+        float rand = Random.value;
+        if (rand < 0.5f) return EnemyType.Weak;
+        if (rand < 0.8f) return EnemyType.Medium;
+        return EnemyType.Strong;
     }
 }
