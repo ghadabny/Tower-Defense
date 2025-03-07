@@ -7,8 +7,8 @@ public class StrongEnemy : Enemy
 {
     void Start()
     {
-        healthPoints = 200;
+        healthPoints = 4000;
         rewardAmt = 50;
-        speed = 3f;
+        speed = 50f;
     }
 }

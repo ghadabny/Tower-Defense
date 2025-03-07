@@ -7,8 +7,8 @@ public class MediumEnemy : Enemy
 {
     void Start()
     {
-        healthPoints = 100;
+        healthPoints = 2000;
         rewardAmt = 20;
-        speed = 2f;
+        speed = 20f;
     }
 }
