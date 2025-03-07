@@ -17,7 +17,7 @@ public class WaveManager : Singleton<WaveManager>
     protected override void Awake()
     {
         base.Awake();
-        enemySpawner = FindObjectOfType<EnemySpawner>(); // Récupère EnemySpawner automatiquement
+        enemySpawner = FindObjectOfType<EnemySpawner>(); 
     }
 
     public void StartNextWave()

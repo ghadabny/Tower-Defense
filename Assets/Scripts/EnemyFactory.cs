@@ -1,29 +1,44 @@
-﻿using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
+using UnityEngine.UI;
 
 public enum EnemyType
 {
-    Basic,
-    Fast,
-    Tank
+    Weak,    
+    Medium,  
+    Strong   
 }
 
 public static class EnemyFactory
 {
-    private static Dictionary<EnemyType, GameObject> enemyPrefabs = new Dictionary<EnemyType, GameObject>();
-
-    public static void Initialize(Dictionary<EnemyType, GameObject> prefabs)
-    {
-        enemyPrefabs = prefabs;
-    }
-
+    
     public static GameObject CreateEnemy(EnemyType type, Vector3 position)
     {
-        if (!enemyPrefabs.ContainsKey(type))
+        
+        GameObject enemyPrefab = LoadEnemyPrefab(type);
+
+        if (enemyPrefab == null)
         {
-            Debug.LogError("Enemy prefab not found for type: " + type);
+            Debug.LogError($"Prefab not found for enemy type: {type}");
             return null;
         }
-        return Object.Instantiate(enemyPrefabs[type], position, Quaternion.identity);
+
+        GameObject enemyInstance = Object.Instantiate(enemyPrefab, position, Quaternion.identity);
+
+        return enemyInstance;
+    }
+
+
+    private static GameObject LoadEnemyPrefab(EnemyType type)
+    {
+        string prefabPath = $"Prefabs/{type}Enemy";
+
+        GameObject prefab = Resources.Load<GameObject>(prefabPath);
+
+        if (prefab == null)
+        {
+            Debug.LogError($"Prefab not found at path: {prefabPath}");
+        }
+
+        return prefab;
     }
 }

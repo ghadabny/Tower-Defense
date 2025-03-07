@@ -1,13 +1,12 @@
 ﻿using UnityEngine;
-using System.Collections;
 using System.Collections.Generic;
 
 public class Enemy : MonoBehaviour
 {
-    [SerializeField] private int healthPoints;
-    [SerializeField] private int rewardAmt;
-    [SerializeField] private Animator anim;
-    [SerializeField] private float speed = 1f;
+    [SerializeField] protected int healthPoints;
+    [SerializeField] protected int rewardAmt;
+    [SerializeField] protected Animator anim; // Animator pour gérer les animations
+    [SerializeField] protected float speed = 1f;
 
     private List<Node> path;
     private int pathIndex = 0;
@@ -21,7 +20,14 @@ public class Enemy : MonoBehaviour
     void Start()
     {
         enemyCollider = GetComponent<Collider2D>();
+
+        // Récupère l'Animator attaché au GameObject
         anim = GetComponent<Animator>();
+        if (anim == null)
+        {
+            Debug.LogError("Animator component missing on " + gameObject.name);
+        }
+
         EnemyManager.Instance.RegisterEnemy(this);
         pathfindingManager = FindObjectOfType<PathfindingManager>();
         CalculatePath();
@@ -36,7 +42,7 @@ public class Enemy : MonoBehaviour
         }
     }
 
-    private void FollowPath()
+    protected virtual void FollowPath()
     {
         if (path == null || pathIndex >= path.Count)
         {
@@ -98,7 +104,11 @@ public class Enemy : MonoBehaviour
         if (healthPoints > damage)
         {
             healthPoints -= damage;
-            anim.Play("Hurt");
+            if (anim != null)
+            {
+                anim.Play("Hurt"); // Jouer l'animation "Hurt"
+            }
+            
             GameManager.Instance.AudioSource.PlayOneShot(SoundManager.Instance.Hit);
         }
         else
@@ -110,7 +120,11 @@ public class Enemy : MonoBehaviour
     private void Die()
     {
         isDead = true;
-        anim.SetTrigger("didDie");
+        if (anim != null)
+        {
+            anim.SetTrigger("didDie"); // Déclencher l'animation de mort
+        }
+        
         enemyCollider.enabled = false;
         EnemyManager.Instance.EnemyKilled(this);
     }
@@ -131,9 +145,10 @@ public class Enemy : MonoBehaviour
             }
         }
     }
+
     public void NotifyHit(Projectile projectile)
     {
-        enemyHit(projectile.AttackStrength); 
+        enemyHit(projectile.AttackStrength);
     }
 
     void OnDestroy()
