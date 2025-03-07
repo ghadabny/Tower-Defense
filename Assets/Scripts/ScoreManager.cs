@@ -23,10 +23,10 @@ public class ScoreManager : MonoBehaviour
 
     private void UpdateUI()
     {
-        scoreText.text = "Vagues : " + currentWave;
+        scoreText.text = "Waves : " + currentWave;
 
         int best = PlayerPrefs.GetInt("BestScore", 0);
-        bestScoreText.text = "Meilleur score : " + best;
+        bestScoreText.text = "Best score : " + best;
     }
 
     private void SaveBestScore()
