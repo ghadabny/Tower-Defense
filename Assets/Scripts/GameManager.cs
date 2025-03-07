@@ -73,11 +73,30 @@ public class GameManager : Singleton<GameManager>
     {
         WaveManager.Instance.ResetWaves();
         TotalEscaped = 0;
+        TotalKilled = 0;
+        roundEscaped = 0;
+        currentState = gameStatus.play; 
+
         EconomyManager.Instance.TotalMoney = 10;
+
+        ScoreManager scoreManager = FindObjectOfType<ScoreManager>();
+        if (scoreManager != null)
+        {
+            scoreManager.ResetScore();
+        }
+
+        EnemyManager.Instance.DestroyAllEnemies();
+
         TowerManager.Instance.DestroyAllTowers();
         TowerManager.Instance.RenameTagsBuildSites();
+
         UIManager.Instance.UpdateEscapedDisplay(TotalEscaped);
+        UIManager.Instance.UpdateWaveDisplay(WaveManager.Instance.WaveNumber);
+        UIManager.Instance.HideGameStatus();
+        UIManager.Instance.ShowGameStatus(gameStatus.play, audioSource);
+
         audioSource.PlayOneShot(SoundManager.Instance.NewGame);
+
     }
 
 }
