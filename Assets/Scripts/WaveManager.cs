@@ -20,6 +20,18 @@ public class WaveManager : Singleton<WaveManager>
         enemySpawner = FindObjectOfType<EnemySpawner>(); 
     }
 
+    private void CheckWaveEnd()
+    {
+        if (EnemyManager.Instance.EnemyCount == 0)
+        {
+            ScoreManager scoreManager = FindObjectOfType<ScoreManager>();
+            if (scoreManager != null)
+            {
+                scoreManager.WaveCompleted();
+            }
+        }
+    }
+
     public void StartNextWave()
     {
         if (waveNumber >= totalWaves)
@@ -29,16 +41,26 @@ public class WaveManager : Singleton<WaveManager>
         }
 
         waveNumber++;
-
         totalEnemies = 3 + waveNumber;
         enemiesPerSpawn = Mathf.Max(1, waveNumber / 2);
 
         UIManager.Instance.UpdateWaveDisplay(waveNumber);
         UIManager.Instance.HideGameStatus();
 
-        StartCoroutine(enemySpawner.SpawnEnemies(totalEnemies, enemiesPerSpawn));
+        StartCoroutine(SpawnWaveAndCheckEnd());
     }
 
+    private IEnumerator SpawnWaveAndCheckEnd()
+    {
+        yield return StartCoroutine(enemySpawner.SpawnEnemies(totalEnemies, enemiesPerSpawn));
+
+        while (EnemyManager.Instance.EnemyCount > 0)
+        {
+            yield return null; 
+        }
+
+        CheckWaveEnd();
+    }
 
     public void ResetWaves()
     {
