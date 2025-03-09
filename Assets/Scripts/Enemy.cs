@@ -132,11 +132,8 @@ public class Enemy : MonoBehaviour
 
     private IEnumerator RemoveAfterDelay()
     {
-        // Wait for the death animation to complete.
-        // Replace 1.5f with the actual length of your death animation.
         yield return new WaitForSeconds(1.5f);
         EnemyManager.Instance.EnemyKilled(this);
-        // Optionally destroy the enemy game object:
         Destroy(gameObject);
     }
 
