@@ -11,6 +11,8 @@ public class UIManager : Singleton<UIManager>
     [SerializeField] private Text waveLabel;
     [SerializeField] private Text gameStatusLabel;
     [SerializeField] private GameObject pauseMenu;
+    [SerializeField] private Text startLabel;
+    [SerializeField] private Text endLabel;
 
     private bool isPaused = false;
 
@@ -95,17 +97,18 @@ public class UIManager : Singleton<UIManager>
             case gameStatus.gameover:
                 gameStatusLabel.text = "Gameover";
                 audioSource.PlayOneShot(SoundManager.Instance.Gameover);
-                nextWaveBtnLabel.text = "Play again";
+                startLabel.text = "Play again";
                 break;
             case gameStatus.next:
-                nextWaveBtnLabel.text = "Next Wave";
-                gameStatusLabel.text = "Wave " + (GameManager.Instance.WaveNumber + 2) + " next.";
+                startLabel.text = "Next Wave";
+                gameStatusLabel.text = "Wave " + (GameManager.Instance.WaveNumber + 2) ;
                 break;
             case gameStatus.play:
-                nextWaveBtnLabel.text = "Play";
+                startLabel.text = "Start";
+                gameStatusLabel.text = "Play ";
                 break;
             case gameStatus.win:
-                nextWaveBtnLabel.text = "Play";
+                startLabel.text = "Play";
                 gameStatusLabel.text = "You Won!";
                 break;
         }
