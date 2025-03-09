@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
+using System.Collections;
 
 public class Enemy : MonoBehaviour
 {
@@ -122,11 +123,21 @@ public class Enemy : MonoBehaviour
         isDead = true;
         if (anim != null)
         {
-            anim.SetTrigger("didDie"); // Déclencher l'animation de mort
+            anim.SetTrigger("didDie");
         }
-        
+
         enemyCollider.enabled = false;
+        StartCoroutine(RemoveAfterDelay());
+    }
+
+    private IEnumerator RemoveAfterDelay()
+    {
+        // Wait for the death animation to complete.
+        // Replace 1.5f with the actual length of your death animation.
+        yield return new WaitForSeconds(1.5f);
         EnemyManager.Instance.EnemyKilled(this);
+        // Optionally destroy the enemy game object:
+        Destroy(gameObject);
     }
 
     void OnTriggerEnter2D(Collider2D other)
